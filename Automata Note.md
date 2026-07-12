@@ -267,17 +267,91 @@ Only the *last* state (q3, meaning "2 or more symbols seen") is accepting, and i
 Same construction as Example 10 (even length): condition is `|w| mod 2 = 0`.
 
 ### Example 16 — Length ≡ 3 (mod 4)
-L = strings whose length mod 4 equals 3.
 
-```mermaid
-stateDiagram-v2
-    [*] --> q0
-    q0 --> q1: a,b
-    q1 --> q2: a,b
-    q2 --> q3: a,b
-    q3 --> q0: a,b
+
+
+
+
+Since 3 is smaller than 4, dividing 3 by 4 gives 0 with a remainder of 3:
+
 ```
-Four states in a cycle (q0→q1→q2→q3→q0…), only q3 is accepting. In general, "length mod k = r" needs **k** states arranged in a cycle, with the state numbered `r` marked accepting.
+3 ÷ 4 = 0 remainder 3
+→ 3 mod 4 = 3
+```
+
+So **"length ≡ 3 (mod 4)"** means: *when you divide the string's length by 4, the remainder is 3.*
+
+### Which lengths qualify?
+
+Lengths satisfying this are 3, 7, 11, 15, 19, … (each one is 4 more than the last):
+
+| Length (n) | n ÷ 4 | Remainder (n mod 4) | Matches "mod 4 = 3"? |
+|---|---|---|---|
+| 0 | 0 | 0 | No |
+| 1 | 0 | 1 | No |
+| 2 | 0 | 2 | No |
+| **3** | 0 | **3** | **Yes** |
+| 4 | 1 | 0 | No |
+| 5 | 1 | 1 | No |
+| 6 | 1 | 2 | No |
+| **7** | 1 | **3** | **Yes** |
+| **11** | 2 | **3** | **Yes** |
+
+So `aba` (length 3) is accepted, `abaabab` (length 7) is accepted, but `ab` (length 2) or `abab` (length 4) are not.
+
+---
+
+## The DFA
+
+**Σ = {a, b}**, L = {strings w such that |w| mod 4 = 3}
+
+**5-tuple:** `D = ({q0, q1, q2, q3}, {a, b}, φ, q0, {q3})`
+
+**Idea:** only the *count* of symbols read matters (not which symbol), so all four states form a simple cycle. Each symbol read — `a` or `b` — advances you one step around the cycle. `q3` is the only accepting state, since that's the point where the running length count hits remainder 3.
+
+### State diagram (cyclic)
+
+```
+        a,b
+   q0 ────────► q1
+   ▲              │
+   │ a,b          │ a,b
+   │              ▼
+   q3 ◄──────── q2
+        a,b
+
+   → q0  = start state, len mod 4 = 0
+      q1 = len mod 4 = 1
+      q2 = len mod 4 = 2
+   * q3  = len mod 4 = 3  (accepting)
+```
+
+### Transition table
+
+| State | a | b |
+|---|---|---|
+| → q0 | q1 | q1 |
+| q1 | q2 | q2 |
+| q2 | q3 | q3 |
+| * q3 | q0 | q0 |
+
+(`→` = start state, `*` = accepting/final state)
+
+### Trace examples
+
+- `aba` (length 3): `q0 →a→ q1 →b→ q2 →a→ q3` ✔ **accepted**
+- `abab` (length 4): `q0 →a→ q1 →b→ q2 →a→ q3 →b→ q0` ✘ rejected (ends at q0, not q3)
+- `abaabab` (length 7, 7 mod 4 = 3): cycles around once (4 steps back to q0), then 3 more steps → lands on q3 ✔ **accepted**
+
+---
+
+## General pattern to remember
+
+For **"length mod k = r"**:
+- Build exactly **k states arranged in a cycle**.
+- Every symbol in Σ pushes the machine one step forward around the cycle (since only the count matters, not the specific symbol).
+- Mark only the state numbered **r** as accepting.
+- If the string ends anywhere else in the cycle, it's rejected.
 
 ### Example 17 — Number of `a`'s ≡ 3 (mod 4)
 Identical cyclic idea, but the cycle only advances on symbol `a` (symbol `b` self-loops on the same state):
